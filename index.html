@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>StockBrain – LSTM Predictor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+
+    body {
+      margin: 0; padding: 0;
+      background: #0f172a;
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .layout { max-width: 1100px; margin: 0 auto; padding: 16px; flex: 1; }
+
+    /* NAVBAR */
+    .navbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px;
+      background: #020617; border-radius: 999px;
+      border: 1px solid #1f2937;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      position: sticky; top: 10px; z-index: 10;
+    }
+
+    .nav-left { font-size: 1.1rem; font-weight: 600; }
+    .nav-left span { color: #22c55e; }
+
+    .nav-items { display: flex; gap: 8px; }
+    .nav-item {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #9ca3af;
+      cursor: pointer;
+      transition: 0.12s;
+    }
+    .nav-item:hover { border-color: #374151; }
+    .nav-item.active { background: #22c55e; color: #020617; }
+
+    /* SECTIONS */
+    section { display: none; }
+    section.active { display: block; }
+
+    /* CARD */
+    .card {
+      background: #020617;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      border: 1px solid #1f2937;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+
+    .title { font-size: 1.4rem; font-weight: 600; margin-bottom: 4px; }
+    .subtitle { font-size: 0.85rem; color: #9ca3af; margin-bottom: 16px; }
+
+    label { font-size: 0.8rem; color: #9ca3af; margin-bottom: 6px; display: block; }
+
+    input, select, textarea {
+      width: 100%; padding: 10px 12px;
+      background: #020617; color: #e5e7eb;
+      border: 1px solid #374151; border-radius: 8px;
+      outline: none; font-size: 0.9rem;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #22c55e; }
+
+    button.primary {
+      width: 100%; margin-top: 12px; padding: 10px 14px;
+      background: #22c55e; color: #020617;
+      border: none; border-radius: 8px;
+      cursor: pointer; font-size: 1rem;
+      transition: 0.1s;
+    }
+    button.primary:active { transform: translateY(1px); opacity: 0.9; }
+
+    .result-card {
+      background: #020617; border-radius: 10px;
+      border: 1px solid #1f2937;
+      padding: 12px; margin-top: 16px;
+    }
+
+    .label { font-size: 0.8rem; color: #9ca3af; }
+    .value { font-size: 1.05rem; font-weight: 500; }
+    .green { color: #22c55e; }
+    .red { color: #f97373; }
+
+    .error { color: #f97373; margin-top: 8px; }
+    .status { margin-top: 8px; color: #9ca3af; }
+
+    .footer { margin-top: 16px; color: #6b7280; font-size: 0.75rem; text-align:center; }
+  </style>
+</head>
+
+<body>
+  <div class="layout">
+
+    <!-- NAV -->
+    <header class="navbar">
+      <div class="nav-left">Stock<span>Brain</span></div>
+      <div class="nav-items">
+        <button class="nav-item active" data-section="home">Home</button>
+        <button class="nav-item" data-section="predict">Predict</button>
+        <button class="nav-item" data-section="contact">Contact</button>
+      </div>
+    </header>
+
+    <main>
+
+      <!-- HOME -->
+      <section id="home" class="active">
+        <div class="card">
+          <div class="title">Welcome to StockBrain</div>
+          <div class="subtitle">
+            Use Predict to estimate next-day stock price using LSTM.<br>
+            Contact tab lets users send a message to your backend.
+          </div>
+        </div>
+      </section>
+
+      <!-- PREDICT -->
+      <section id="predict">
+        <div class="card">
+          <div class="title">LSTM Stock Predictor</div>
+          <div class="subtitle">Enter a stock ticker (TSLA, AAPL, INFY.NS, BTC-USD)</div>
+
+          <label>Ticker</label>
+          <input id="ticker" placeholder="TSLA, AAPL, INFY.NS" />
+
+          <label>History Period</label>
+          <select id="period">
+            <option value="6mo">6 months</option>
+            <option value="1y" selected>1 year</option>
+            <option value="2y">2 years</option>
+          </select>
+
+          <label>Epochs</label>
+          <input id="epochs" type="number" value="10" min="1" max="50" />
+
+          <button class="primary" id="predictBtn">Predict Price</button>
+
+          <div id="result" class="result-card" style="display:none;">
+            <div><span class="label">Ticker</span><div class="value" id="resTicker"></div></div>
+            <div><span class="label">Last Close</span><div class="value" id="resLastClose"></div></div>
+            <div><span class="label">Predicted</span><div class="value" id="resPredicted"></div></div>
+            <div><span class="label">Currency</span><div class="value" id="resCurrency"></div></div>
+            <div class="status" id="resStatus"></div>
+          </div>
+
+          <div id="error" class="error"></div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section id="contact">
+        <div class="card">
+          <div class="title">Contact</div>
+          <div class="subtitle">Send a message directly to backend.</div>
+
+          <label>Name</label>
+          <input id="name" placeholder="Your name">
+
+          <label>Email</label>
+          <input id="email" type="email" placeholder="you@example.com">
+
+          <label>Message</label>
+          <textarea id="message" rows="4" placeholder="Your message"></textarea>
+
+          <button class="primary" id="contactBtn">Send Message</button>
+
+          <div id="contactStatus" class="status"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:9000";
+
+    // NAV SWITCHING
+    document.querySelectorAll(".nav-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+        document.getElementById(btn.dataset.section).classList.add("active");
+      });
+    });
+
+    // PREDICT LOGIC
+    const predictBtn = document.getElementById("predictBtn");
+    predictBtn.addEventListener("click", async () => {
+      const ticker = document.getElementById("ticker").value.trim();
+      const period = document.getElementById("period").value;
+      const epochs = document.getElementById("epochs").value;
+
+      const errBox = document.getElementById("error");
+      const card = document.getElementById("result");
+      errBox.textContent = "";
+      card.style.display = "none";
+
+      if (!ticker) {
+        errBox.textContent = "Ticker required.";
+        return;
+      }
+
+      predictBtn.disabled = true;
+      predictBtn.textContent = "Predicting...";
+
+      try {
+        const res = await fetch(`${API_BASE}/predict_lstm/${ticker}?period=${period}&epochs=${epochs}`);
+        const data = await res.json();
+
+        if (!res.ok || data.error) throw new Error(data.error);
+
+        document.getElementById("resTicker").textContent = data.ticker;
+        document.getElementById("resLastClose").textContent = data.last_close_price.toFixed(2);
+        document.getElementById("resPredicted").textContent = data.predicted_next_close_price.toFixed(2);
+        document.getElementById("resCurrency").textContent = data.currency;
+
+        const status = document.getElementById("resStatus");
+        if (data.predicted_next_close_price > data.last_close_price) {
+          status.textContent = "Model predicts an upward move.";
+          document.getElementById("resPredicted").className = "value green";
+        } else {
+          status.textContent = "Model predicts a downward move.";
+          document.getElementById("resPredicted").className = "value red";
+        }
+
+        card.style.display = "block";
+      } catch (e) {
+        errBox.textContent = e.message;
+      } finally {
+        predictBtn.disabled = false;
+        predictBtn.textContent = "Predict Price";
+      }
+    });
+
+    // CONTACT LOGIC
+    document.getElementById("contactBtn").addEventListener("click", async () => {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const message = document.getElementById("message").value.trim();
+
+      const status = document.getElementById("contactStatus");
+      status.textContent = "";
+
+      if (!name || !email || !message) {
+        status.textContent = "Fill all fields.";
+        status.style.color = "#f97373";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/contact`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({name, email, message})
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail);
+
+        status.textContent = data.message;
+        status.style.color = "#22c55e";
+      } catch (e) {
+        status.textContent = e.message;
+        status.style.color = "#f97373";
+      }
+    });
+  </script>
+</body>
+</html>
