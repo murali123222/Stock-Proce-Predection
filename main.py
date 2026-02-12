@@ -74,6 +74,9 @@ def create_sequences(data, seq_length=60):
         y.append(data[i + seq_length])
     return np.array(X), np.array(y)
 
+@app.get("/")
+def home():
+    return {"message": "Stock Prediction API is running"}
 
 # ================== PREDICTION ENDPOINT ==================
 @app.get("/predict_lstm/{ticker}")
