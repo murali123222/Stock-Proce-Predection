@@ -2,6 +2,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
+from fastapi.responses import HTMLResponse
+
 
 import smtplib
 from email.message import EmailMessage
