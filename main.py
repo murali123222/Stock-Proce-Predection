@@ -1,4 +1,3 @@
-# ================== IMPORTS ==================
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
@@ -16,35 +15,30 @@ import torch
 import torch.nn as nn
 
 
-# ================== APP SETUP ==================
 app = FastAPI(title="Stock LSTM API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # restrict in production
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# ================== EMAIL CONFIG ==================
-# 🔴 EDIT THESE
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
-SMTP_USER = "your_email@gmail.com"           # your gmail
-SMTP_PASSWORD = "your_app_password_here"     # gmail app password
-CONTACT_TO_EMAIL = "your_email@gmail.com"    # where mail should arrive
+SMTP_USER = "your_email@gmail.com"        
+SMTP_PASSWORD = "your_app_password_here"     
+CONTACT_TO_EMAIL = "your_email@gmail.com"    
 
 
-# ================== CONTACT MODEL ==================
 class ContactRequest(BaseModel):
     name: str
     email: EmailStr
     message: str
 
 
-# ================== LSTM MODEL ==================
 class StockLSTM(nn.Module):
     def __init__(self, input_size=1, hidden_size=64, num_layers=2, output_size=1):
         super().__init__()
@@ -66,7 +60,6 @@ class StockLSTM(nn.Module):
         return out
 
 
-# ================== UTIL FUNCTIONS ==================
 def create_sequences(data, seq_length=60):
     X, y = [], []
     for i in range(len(data) - seq_length):
@@ -78,7 +71,6 @@ def create_sequences(data, seq_length=60):
 def home():
     return {"message": "Stock Prediction API is running"}
 
-# ================== PREDICTION ENDPOINT ==================
 @app.get("/predict_lstm/{ticker}")
 def predict_lstm_price(
     ticker: str,
@@ -87,7 +79,7 @@ def predict_lstm_price(
     epochs: int = 10,
     batch_size: int = 32,
 ):
-    # 1️⃣ Download stock data
+    
     try:
         df = yf.download(ticker.upper(), period=period, interval="1d", progress=False)
     except Exception as e:
@@ -101,11 +93,11 @@ def predict_lstm_price(
     if len(close_prices) <= seq_length:
         raise HTTPException(status_code=400, detail="Not enough historical data")
 
-    # 2️⃣ Scale
+    
     scaler = MinMaxScaler()
     scaled_data = scaler.fit_transform(close_prices)
 
-    # 3️⃣ Create sequences
+    
     X, y = create_sequences(scaled_data, seq_length)
     X = X.reshape((X.shape[0], X.shape[1], 1))
 
@@ -121,7 +113,7 @@ def predict_lstm_price(
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    # 4️⃣ Train
+    
     model.train()
     for _ in range(max(1, epochs)):
         for batch_X, batch_y in loader:
@@ -134,7 +126,7 @@ def predict_lstm_price(
             loss.backward()
             optimizer.step()
 
-    # 5️⃣ Predict next day
+    
     model.eval()
     last_seq = scaled_data[-seq_length:].reshape(1, seq_length, 1)
     last_tensor = torch.tensor(last_seq, dtype=torch.float32).to(device)
@@ -153,7 +145,7 @@ def predict_lstm_price(
     }
 
 
-# ================== CONTACT ENDPOINT ==================
+
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "thotamurali444@gmail.com"
