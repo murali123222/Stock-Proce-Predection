@@ -18,7 +18,6 @@
 
     .layout { max-width: 1100px; margin: 0 auto; padding: 16px; flex: 1; }
 
-    /* NAVBAR */
     .navbar {
       display: flex; justify-content: space-between; align-items: center;
       padding: 10px 16px;
@@ -44,11 +43,11 @@
     .nav-item:hover { border-color: #374151; }
     .nav-item.active { background: #22c55e; color: #020617; }
 
-    /* SECTIONS */
+   
     section { display: none; }
     section.active { display: block; }
 
-    /* CARD */
+   
     .card {
       background: #020617;
       border-radius: 16px;
@@ -103,7 +102,7 @@
 <body>
   <div class="layout">
 
-    <!-- NAV -->
+    
     <header class="navbar">
       <div class="nav-left">Stock<span>Brain</span></div>
       <div class="nav-items">
@@ -115,7 +114,7 @@
 
     <main>
 
-      <!-- HOME -->
+      
       <section id="home" class="active">
         <div class="card">
           <div class="title">Welcome to StockBrain</div>
@@ -126,7 +125,7 @@
         </div>
       </section>
 
-      <!-- PREDICT -->
+      
       <section id="predict">
         <div class="card">
           <div class="title">LSTM Stock Predictor</div>
@@ -159,7 +158,7 @@
         </div>
       </section>
 
-      <!-- CONTACT -->
+      
       <section id="contact">
         <div class="card">
           <div class="title">Contact</div>
@@ -186,7 +185,7 @@
   <script>
     const API_BASE = "http://127.0.0.1:9000";
 
-    // NAV SWITCHING
+    
     document.querySelectorAll(".nav-item").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
@@ -197,7 +196,7 @@
       });
     });
 
-    // PREDICT LOGIC
+   
     const predictBtn = document.getElementById("predictBtn");
     predictBtn.addEventListener("click", async () => {
       const ticker = document.getElementById("ticker").value.trim();
@@ -246,7 +245,7 @@
       }
     });
 
-    // CONTACT LOGIC
+    
     document.getElementById("contactBtn").addEventListener("click", async () => {
       const name = document.getElementById("name").value.trim();
       const email = document.getElementById("email").value.trim();
